@@ -191,7 +191,7 @@ def get_stories():
 @app.route('/stories/<id>',methods=['GET'])
 def get_story(id):
     print(type(id))
-    return jsonify(mycol.find_one({'_id':int(id)})),200
+    return jsonify(mycol.find_one({'_id':int(id)},{'_id':1,'title':1,'created':1,'updated':1,'paragraphs':1})),200
 
 @app.route('/clear',methods=['POST'])
 def clear_doc():
