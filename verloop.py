@@ -31,6 +31,7 @@ story_count = 0
 # insert story summary document
 if(mysum.find({}).count()==0):
     mysum.insert({
+                    '_id': 0,
                     'limit':story_limit,
                     'offset':offset,
                     'count':story_count,
@@ -184,7 +185,7 @@ def add_word():
 # Get stories API
 @app.route('/stories',methods=['GET'])
 def get_stories():
-    return jsonify(mysum.find({})),200
+    return jsonify(mysum.find_one({'limit':story_limit})),200
 
 # Get story by ID
 @app.route('/stories/<id>',methods=['GET'])
@@ -192,11 +193,11 @@ def get_story(id):
     print(type(id))
     return jsonify(mycol.find_one({'_id':int(id)})),200
 
-# @app.route('/clear',methods=['POST'])
-# def clear_doc():
-#     mycol.delete_many({})
-#     mysum.delete_many({})
-#     return '{"message":"the docs been cleared"}'
+@app.route('/clear',methods=['POST'])
+def clear_doc():
+    mycol.delete_many({})
+    mysum.delete_many({})
+    return '{"message":"the docs been cleared"}'
 
 
 if __name__ == '__main__':
