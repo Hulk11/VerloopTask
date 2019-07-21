@@ -166,6 +166,7 @@ def add_word():
         else:
             title += " " + data['word']
             mycol.find_one_and_update({'_id':curr_id},{'$set':{'title':title}})
+            mysum.find_one_and_update({'limit':story_limit},{'$set':{'results.'+str(curr_id-1)+'.title':title}})
 
     # Increment the paragraph counter
     if(mycol.find_one({'_id':curr_id})['sentence_count']>P_LENGTH-1):
@@ -190,6 +191,13 @@ def get_stories():
 def get_story(id):
     print(type(id))
     return jsonify(mycol.find_one({'_id':int(id)})),200
+
+# @app.route('/clear',methods=['POST'])
+# def clear_doc():
+#     mycol.delete_many({})
+#     mysum.delete_many({})
+#     return '{"message":"the docs been cleared"}'
+
 
 if __name__ == '__main__':
     app.run(debug=True)
