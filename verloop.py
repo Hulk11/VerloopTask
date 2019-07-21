@@ -44,6 +44,100 @@ def add_word():
     init_counts = 0             # initialize count data in document , otherwise insert query adds string instead of int
     return_code = 200           # return codes set before returning
 
+    # If a collection already exists, then set the above parameters accordingly
+    if(last):
+        curr_id = last['_id']
+        p_count = int(last['para_count'])
+
+    # If the collection is empty OR story has ended, add another document
+    if(mycol.find({}).count()==0 or p_count>P_LENGTH-1):
+        curr_id += 1            # increment the story ID
+        return_code = 201
+
+        # Denotes the end of the story
+        if(p_count>P_LENGTH-1):
+            curr_sent = last['current_sentence']
+            # Add a word to te same sentence
+            if(not(curr_sent)):
+                curr_sent = data['word']
+            else:
+                curr_sent += " " + data['word']
+
+            # update the sentence
+            mycol.find_one_and_update({'_id':curr_id-1},{'$set':{'current_sentence':curr_sent}})
+
+            # add sentence to trials array
+            mycol.find_one_and_update({'_id':curr_id-1},{'$push':{'trials':curr_sent}})
+
+            # # Increment the paragraph counter
+            # if(int(last['sentence_count'])>S_LENGTH-1):
+            #     mycol.find_one_and_update({'_id':curr_id-1},{'$inc': {'para_count': 1}})
 
 
-    return data
+        # Insert the below document to the collection
+        mycol.insert({
+                        "_id":curr_id,
+                        "title":data['word'],
+                        "created":datetime.now().strftime("%H:%M:%S"),
+                        "updated":datetime.now().strftime("%H:%M:%S"),
+                        "paragraphs": [
+                            {
+                                "sentences" : [
+                                    {
+
+                                    }
+                                ]
+                            }
+                        ],
+                        "trials":[],            # trial field for storing all sentences
+                        "current_sentence":'',
+                        "limit":'1',
+                        "offset":'0',
+                        "count":init_counts,
+                        "para_count":init_counts,
+                        "sentence_count":init_counts,
+                        "word_count":init_counts
+        })
+
+    # If the collection already has a valid document where an addition can be made,
+    # add the word in the sentence, and accordingly update the fields
+    else:
+        title = last['title']           # title of the current story
+
+        # If title already has 2 words, add the new word in a sentence
+        if(len(title.split(" "))>1):
+            p_index = last['para_count']
+            s_index = last['sentence_count']
+            w_index = last['word_count']
+            curr_sent = last['current_sentence']
+
+            # If sentence length reached, add another sentence and update fields
+            if(len(curr_sent.split(" "))>S_LENGTH-1):
+                mycol.find_one_and_update({'_id':curr_id},{'$push':{'trials':curr_sent}})
+                mycol.find_one_and_update({'_id':curr_id},{'$inc': {'sentence_count': 1}})
+                mycol.find_one_and_update({'_id':curr_id},{'$set':{'current_sentence':data['word']}})
+
+            # Add a word to the same sentence
+            else:
+                if(not(curr_sent)):
+                    curr_sent = data['word']
+                else:
+                    curr_sent += " " + data['word']
+                mycol.find_one_and_update({'_id':curr_id},{'$set':{'current_sentence':curr_sent}})
+
+            # Increment the paragraph counter
+            if(int(last['sentence_count'])>S_LENGTH-1):
+                mycol.find_one_and_update({'_id':curr_id},{'$inc': {'para_count': 1}})
+
+        # Title only has one word, add one more to it
+        else:
+            title += " " + data['word']
+            mycol.find_one_and_update({'_id':curr_id},{'$set':{'title':title}})
+
+
+    # Increment the number of words counter
+    mycol.find_one_and_update({'_id':curr_id},{'$inc': {'word_count': 1}, '$set': {'updated':datetime.now().strftime("%H:%M:%S") }})
+    return jsonify(mycol.find_one({'_id':curr_id},{'_id':1,'title':1,'current_sentence':1})),return_code
+
+if __name__ == '__main__':
+    app.run(debug=True)
