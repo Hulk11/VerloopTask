@@ -30,4 +30,9 @@ app = Flask(__name__)
 @app.route('/add',methods=['POST'])
 def add_word():
     data = request.get_json()
+
+    # If more than one word given as input , throw error 400
+    if(len(data['word'].split(" "))>1):
+        return jsonify('{ "error" : "multiple words sent" }'),400
+
     return data
