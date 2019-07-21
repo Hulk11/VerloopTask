@@ -79,26 +79,7 @@ def add_word():
         curr_id += 1            # increment the story ID
         return_code = 201
 
-        # Denotes the end of the story
-        # if(p_count>P_LENGTH-1):
-        #
-        #     curr_sent = last['current_sentence']
-        #     # Add a word to te same sentence
-        #     if(not(curr_sent)):
-        #         curr_sent = data['word']
-        #     else:
-        #         curr_sent += " " + data['word']
-        #
-        #     # update the sentence
-        #     mycol.find_one_and_update({'_id':curr_id-1},{'$set':{'current_sentence':curr_sent}})
-
-            # # add sentence to trials array
-            # mycol.find_one_and_update({'_id':curr_id-1},{'$push':{'trials':curr_sent}})
-
-
-            # # Add the story summary to summary collection
-            # mysum.find_one_and_update({},{'$push':{'results':{'id':curr_id-1,'title':last['title'],'created':last['created'],'updated':last['updated']}}})
-
+        # Put a check on number of stories, should be under a limit
         if(curr_id>story_limit):
             return '{"error" : "story limit exceeded"}',400
 
@@ -111,7 +92,7 @@ def add_word():
                         "paragraphs": [
                             {
                                 "sentences" : [
-                                    
+
                                 ]
                             }
                         ],
@@ -143,14 +124,27 @@ def add_word():
 
         # If title already has 2 words, add the new word in a sentence
         if(len(title.split(" "))>1):
+
+            # Keep track of the current sentence
             curr_sent = mycol.find_one({'_id':curr_id})['current_sentence']
+
+            # Keep track of current number of paragraphs
             curr_para = mycol.find_one({'_id':curr_id})['para_count']
+
+
+            # Updating the current sentence
+            # If it's empty, then fill
             if(not(curr_sent)):
                 curr_sent = data['word']
+
+            # oterwise add
             else:
                 curr_sent += " " + data['word']
             mycol.find_one_and_update({'_id':curr_id},{'$set':{'current_sentence':curr_sent}})
 
+            # If a sentence has exhausted it's word limit, then increase the sentence count by 1,
+            # and add it to the current paragraph. The current has been kept in track by using,
+            # curr_para variable defined above
             if(len(curr_sent.split(" "))>S_LENGTH-1):
                 mycol.find_one_and_update({'_id':curr_id},{'$inc': {'sentence_count': 1}})
                 mycol.find_one_and_update({'_id':curr_id},{'$push': {'paragraphs.'+str(curr_para)+'.sentences': curr_sent}})
@@ -158,7 +152,10 @@ def add_word():
         # Title only has one word, add one more to it
         else:
             title += " " + data['word']
+            # Update the title in details collection
             mycol.find_one_and_update({'_id':curr_id},{'$set':{'title':title}})
+
+            # Update the title in summary collection
             mysum.find_one_and_update({'limit':story_limit},{'$set':{'results.'+str(curr_id-1)+'.title':title}})
 
     # Increment the paragraph counter
@@ -169,17 +166,19 @@ def add_word():
     mycol.find_one_and_update({'_id':curr_id},{'$inc': {'word_count': 1}, '$set': {'updated':datetime.utcnow().isoformat() }})
 
     # updating the summary collection
-    # mysum.find_one_and_update({'limit':story_limit},{'$set':{'results.'+str(curr_id)+'.updated':datetime.utcnow().isoformat()}})
     mysum.find_one_and_update({'limit':story_limit},{'$set':{'results.'+str(curr_id-1)+'.updated':datetime.utcnow().isoformat()}})
+
 
     return jsonify(mycol.find_one({'_id':curr_id},{'_id':1,'title':1,'current_sentence':1})),return_code
 
 # Get stories API
+# Here, we just return the whole summary collection
 @app.route('/stories',methods=['GET'])
 def get_stories():
     return jsonify(mysum.find_one({'limit':story_limit})),200
 
 # Get story by ID
+# Return story by story id
 @app.route('/stories/<id>',methods=['GET'])
 def get_story(id):
     print(type(id))
@@ -194,4 +193,4 @@ def clear_doc():
 
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=False) # False, since it was meant to be kept in mind that it this in production.
