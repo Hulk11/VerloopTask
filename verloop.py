@@ -144,7 +144,11 @@ def add_word():
 def get_stories():
     return return jsonify(mycol.find_one({'_id':curr_id},{'_id':1,'title':1,'created':1,'updated':1})),200
 
-
+# Get story by ID
+@app.route('/stories/<id>',methods=['GET'])
+def get_story(id):
+    print(type(id))
+    return jsonify(mycol.find_one({'_id':int(id)})),200
 
 if __name__ == '__main__':
     app.run(debug=True)
