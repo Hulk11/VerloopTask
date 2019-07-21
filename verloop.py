@@ -18,10 +18,10 @@ myclient = pymongo.MongoClient("mongodb://localhost:27017/")
 curr = myclient["mydb"]
 
 # create a collection for stories
-mycol = curr["stories10"]
+mycol = curr["stories12"]
 
 # create collection for stories' overview summary
-mysum = curr["summary9"]
+mysum = curr["summary12"]
 
 # summary parameters limit
 story_limit = 10
@@ -103,8 +103,8 @@ def add_word():
         mycol.insert({
                         "_id":curr_id,
                         "title":data['word'],
-                        "created":datetime.now().strftime("%H:%M:%S"),
-                        "updated":datetime.now().strftime("%H:%M:%S"),
+                        "created":datetime.utcnow().isoformat(),
+                        "updated":datetime.utcnow().isoformat(),
                         "paragraphs": [
                             {
                                 "sentences" : [
@@ -172,7 +172,12 @@ def add_word():
         mycol.find_one_and_update({'_id':curr_id},{'$inc': {'para_count': 1}})
 
     # Increment the number of words counter
-    mycol.find_one_and_update({'_id':curr_id},{'$inc': {'word_count': 1}, '$set': {'updated':datetime.now().strftime("%H:%M:%S") }})
+    mycol.find_one_and_update({'_id':curr_id},{'$inc': {'word_count': 1}, '$set': {'updated':datetime.utcnow().isoformat() }})
+
+    # updating the summary collection
+    # mysum.find_one_and_update({'limit':story_limit},{'$set':{'results.'+str(curr_id)+'.updated':datetime.utcnow().isoformat()}})
+    mysum.find_one_and_update({'limit':story_limit},{'$set':{'results.'+str(curr_id-1)+'.updated':datetime.utcnow().isoformat()}})
+
     return jsonify(mycol.find_one({'_id':curr_id},{'_id':1,'title':1,'current_sentence':1})),return_code
 
 # Get stories API
