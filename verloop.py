@@ -12,12 +12,21 @@ import pymongo
 from flask import Flask, request,jsonify
 import requests
 from datetime import datetime
+import os
+
+#credentials from VERLOOP_DSN env variable
+user = os.environ['VERLOOP_DSN'].split(";")[0]
+passwd = os.environ['VERLOOP_DSN'].split(";")[1]
+
+# For Debug logs
+maintain_log = os.environ['VERLOOP_DEBUG']
 
 # DB connection
 myclient = pymongo.MongoClient("mongodb://localhost:27017/")
 
 # create a DB
 curr = myclient["mydb"]
+# curr.add_user('newTestUser', 'Test123', roles=[{'role':'readWrite','db':'testdb'}]
 
 # create a collection for stories
 mycol = curr["stories12"]
