@@ -139,5 +139,12 @@ def add_word():
     mycol.find_one_and_update({'_id':curr_id},{'$inc': {'word_count': 1}, '$set': {'updated':datetime.now().strftime("%H:%M:%S") }})
     return jsonify(mycol.find_one({'_id':curr_id},{'_id':1,'title':1,'current_sentence':1})),return_code
 
+# Get stories API
+@app.route('/stories',methods=['GET'])
+def get_stories():
+    return return jsonify(mycol.find_one({'_id':curr_id},{'_id':1,'title':1,'created':1,'updated':1})),200
+
+
+
 if __name__ == '__main__':
     app.run(debug=True)
