@@ -4,6 +4,8 @@
     Database  - MongoDB
     Framework - Flask
     Library   - PyMongo
+
+    Maintaining 2 collections, one for story details and other for summary
 '''
 
 import pymongo
@@ -109,9 +111,7 @@ def add_word():
                         "paragraphs": [
                             {
                                 "sentences" : [
-                                    {
-
-                                    }
+                                    
                                 ]
                             }
                         ],
@@ -144,24 +144,16 @@ def add_word():
         # If title already has 2 words, add the new word in a sentence
         if(len(title.split(" "))>1):
             curr_sent = mycol.find_one({'_id':curr_id})['current_sentence']
-            # If sentence length reached, add another sentence and update fields
-            #     # print("-------",curr_sent.split(" "))
-            # if(len(curr_sent.split(" "))>S_LENGTH-1):
-            #     print("sentence length reached")
-            #     mycol.find_one_and_update({'_id':curr_id},{'$push':{'trials':curr_sent}})
-            #     mycol.find_one_and_update({'_id':curr_id},{'$inc': {'sentence_count': 1}})
-            #     mycol.find_one_and_update({'_id':curr_id},{'$set':{'current_sentence':data['word']}})
-            #
-            # # Add a word to the same sentence
-            # else:
-            print("sentence length not reached")
+            curr_para = mycol.find_one({'_id':curr_id})['para_count']
             if(not(curr_sent)):
                 curr_sent = data['word']
             else:
                 curr_sent += " " + data['word']
             mycol.find_one_and_update({'_id':curr_id},{'$set':{'current_sentence':curr_sent}})
+
             if(len(curr_sent.split(" "))>S_LENGTH-1):
                 mycol.find_one_and_update({'_id':curr_id},{'$inc': {'sentence_count': 1}})
+                mycol.find_one_and_update({'_id':curr_id},{'$push': {'paragraphs.'+str(curr_para)+'.sentences': curr_sent}})
 
         # Title only has one word, add one more to it
         else:
@@ -193,6 +185,7 @@ def get_story(id):
     print(type(id))
     return jsonify(mycol.find_one({'_id':int(id)},{'_id':1,'title':1,'created':1,'updated':1,'paragraphs':1})),200
 
+# Remove both collections
 @app.route('/clear',methods=['POST'])
 def clear_doc():
     mycol.delete_many({})
