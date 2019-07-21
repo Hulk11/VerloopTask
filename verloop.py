@@ -20,13 +20,13 @@ myclient = pymongo.MongoClient("mongodb://localhost:27017/")
 curr = myclient["mydb"]
 
 # create a collection for stories
-mycol = curr["stories2"]
+mycol = curr["stories3"]
 
 # create collection for stories' overview summary
-mysum = curr["summary"]
+mysum = curr["summary3"]
 
 # summary parameters limit
-story_limit = 10
+story_limit = 5
 offset = 0
 story_count = 0
 
@@ -105,8 +105,8 @@ def add_word():
         mycol.insert({
                         "_id":curr_id,
                         "title":data['word'],
-                        "created":datetime.now().strftime("%H:%M:%S"),
-                        "updated":datetime.now().strftime("%H:%M:%S"),
+                        "created":datetime.utcnow().isoformat(),
+                        "updated":datetime.utcnow().isoformat(),
                         "paragraphs": [
                             {
                                 "sentences" : [
@@ -176,7 +176,11 @@ def add_word():
 
 
     # Increment the number of words counter
-    mycol.find_one_and_update({'_id':curr_id},{'$inc': {'word_count': 1}, '$set': {'updated':datetime.now().strftime("%H:%M:%S") }})
+    mycol.find_one_and_update({'_id':curr_id},{'$inc': {'word_count': 1}, '$set': {'updated':datetime.utcnow().isoformat() }})
+
+    # update updated time in smmary list_collection_names
+    mysum.find_one_and_update({},{'$set':{'results.updated':datetime.utcnow().isoformat()}})
+
     return jsonify(mycol.find_one({'_id':curr_id},{'_id':1,'title':1,'current_sentence':1})),return_code
 
 # Get stories API
@@ -189,6 +193,14 @@ def get_stories():
 def get_story(id):
     print(type(id))
     return jsonify(mycol.find_one({'_id':int(id)})),200
+
+# Delete Collection
+@app.route('/clear',methods=['POST'])
+def clear_doc():
+    mycol.delete_many({})
+    mysum.delete_many({})
+    return '{"message":"the collections have been cleared"}'
+
 
 if __name__ == '__main__':
     app.run(debug=True)
