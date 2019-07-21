@@ -15,8 +15,32 @@ from datetime import datetime
 
 # DB connection
 myclient = pymongo.MongoClient("mongodb://localhost:27017/")
+
+# create a DB
 curr = myclient["mydb"]
+
+# create a collection for stories
 mycol = curr["stories2"]
+
+# create collection for stories' overview summary
+mysum = curr["summary"]
+
+# summary parameters limit
+story_limit = 10
+offset = 0
+story_count = 0
+
+# insert story summary document
+if(mysum.find({}).count()==0):
+    mysum.insert({
+                    'limit':story_limit,
+                    'offset':offset,
+                    'count':story_count,
+                    'results':[
+
+                    ]
+                })
+
 
 # Constraint Constants
 S_LENGTH = 2            # Sentence length
@@ -56,6 +80,7 @@ def add_word():
 
         # Denotes the end of the story
         if(p_count>P_LENGTH-1):
+
             curr_sent = last['current_sentence']
             # Add a word to te same sentence
             if(not(curr_sent)):
@@ -69,10 +94,12 @@ def add_word():
             # add sentence to trials array
             mycol.find_one_and_update({'_id':curr_id-1},{'$push':{'trials':curr_sent}})
 
-            # # Increment the paragraph counter
-            # if(int(last['sentence_count'])>S_LENGTH-1):
-            #     mycol.find_one_and_update({'_id':curr_id-1},{'$inc': {'para_count': 1}})
 
+            # # Add the story summary to summary collection
+            # mysum.find_one_and_update({},{'$push':{'results':{'id':curr_id-1,'title':last['title'],'created':last['created'],'updated':last['updated']}}})
+
+        if(curr_id>story_limit):
+            return '{"error" : "story limit exceeded"}',400
 
         # Insert the below document to the collection
         mycol.insert({
@@ -98,6 +125,19 @@ def add_word():
                         "sentence_count":init_counts,
                         "word_count":init_counts
         })
+
+        # Add the story summary to summary collection
+        mysum.find_one_and_update({},{'$push':{
+                                                'results':{
+                                                            'id':curr_id,
+                                                            'title':data['word'],
+                                                            'created':datetime.utcnow().isoformat(),
+                                                            'updated':datetime.utcnow().isoformat()
+                                                           }
+                                                }
+                                     })
+
+
 
     # If the collection already has a valid document where an addition can be made,
     # add the word in the sentence, and accordingly update the fields
@@ -142,7 +182,7 @@ def add_word():
 # Get stories API
 @app.route('/stories',methods=['GET'])
 def get_stories():
-    return return jsonify(mycol.find_one({'_id':curr_id},{'_id':1,'title':1,'created':1,'updated':1})),200
+    return jsonify(mysum.find({})),200
 
 # Get story by ID
 @app.route('/stories/<id>',methods=['GET'])
