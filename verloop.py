@@ -35,4 +35,9 @@ def add_word():
     if(len(data['word'].split(" "))>1):
         return jsonify('{ "error" : "multiple words sent" }'),400
 
+    # get the latest added Story
+    last = mycol.find_one(sort=[('_id',pymongo.DESCENDING)])
+    # print("------------- -         ",mycol.find({}).count())
+
+    
     return data
