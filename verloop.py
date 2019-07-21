@@ -37,7 +37,13 @@ def add_word():
 
     # get the latest added Story
     last = mycol.find_one(sort=[('_id',pymongo.DESCENDING)])
-    # print("------------- -         ",mycol.find({}).count())
 
-    
+    # helper variables
+    curr_id = 0                 # to get the current story ID
+    p_count = 0                 # to get the paragraph count
+    init_counts = 0             # initialize count data in document , otherwise insert query adds string instead of int
+    return_code = 200           # return codes set before returning
+
+
+
     return data
