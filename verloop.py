@@ -53,9 +53,9 @@ if(mysum.find({}).count()==0):
 
 
 # Constraint Constants
-S_LENGTH = 3            # Sentence length
-P_LENGTH = 1            # Paragraph Length
-ST_LENGTH = 1           # Story Length
+S_LENGTH = 15            # Sentence length
+P_LENGTH = 10            # Paragraph Length
+ST_LENGTH = 7           # Story Length
 
 # Flask app init
 app = Flask(__name__)
@@ -202,4 +202,4 @@ def clear_doc():
 
 
 if __name__ == '__main__':
-    app.run(debug=False) # False, since it was meant to be kept in mind that it this in production.
+    app.run(debug=True) # False, since it was meant to be kept in mind that it this in production.
