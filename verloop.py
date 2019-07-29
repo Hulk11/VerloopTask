@@ -29,10 +29,10 @@ curr = myclient["mydb"]
 # curr.add_user('newTestUser', 'Test123', roles=[{'role':'readWrite','db':'testdb'}]
 
 # create a collection for stories
-mycol = curr["stories12"]
+mycol = curr["stories"]
 
 # create collection for stories' overview summary
-mysum = curr["summary12"]
+mysum = curr["summary"]
 
 # summary parameters limit
 story_limit = 10
@@ -202,4 +202,4 @@ def clear_doc():
 
 
 if __name__ == '__main__':
-    app.run(debug=True) # False, since it was meant to be kept in mind that it this in production.
+    app.run(debug=False) # False, since it was meant to be kept in mind that it this in production.
